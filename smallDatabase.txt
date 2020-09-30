@@ -1,0 +1,8 @@
+Konosuba1,[Sora Amamiya,Rie Takahashi,Ai Kayano,Jun Fukushima,Yui Horie]
+Konosuba2,[Sora Amamiya,Rie Takahashi,Ai Kayano,Jun Fukushima,Yui Horie]
+Rezero,[Rie Takahashi,Inori Minase,Rie Murakawa,Yui Horie,Yuusuke Kobayashi]
+Kanokari,[Sora Amamiya,Aoi Yuuki,Nao Touyama,Rie Takahashi]
+Chihayafuru,[Asami Seto,Mamoru Miyano,Yoshimasa Hosoya]
+SteinsGate,[Mamoru Miyano,Kana Hanazawa,Asami Imai]
+NoCommon,[RandomVA1,RandomVA2]
+NotAShow,[]
