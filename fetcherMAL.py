@@ -1,14 +1,20 @@
-from urllib.request import Request, urlopen
+#from urllib.request import Request, urlopen
 import json
 import pprint
+import requests
 
-SHOW_ID = 38472
+SHOW_ID = 40839
 
-request = Request(f'https://api.jikan.moe/v3/anime/{SHOW_ID}/characters_staff')
+# request = Request(f'https://api.jikan.moe/v3/anime/{SHOW_ID}/characters_staff')
 #request = 'https://api.jikan.moe/v3/anime/40839/characters_staff'
 
-response_body = urlopen(request).read()
-response_body = json.loads(response_body)
+url = f'https://api.jikan.moe/v3/anime/{SHOW_ID}/characters_staff'
+
+response_body = requests.get(url=url)
+response_body = response_body.json()
+
+# response_body = urlopen(request).read()
+# response_body = json.loads(response_body)
 
 # at this point, the response should be in the form of a JSON
 
@@ -36,3 +42,5 @@ for char in charList:
 
 #print(actorToChar)
 pprint.pprint(actorToChar)
+
+# TODO: GET TITLE OF SHOW
