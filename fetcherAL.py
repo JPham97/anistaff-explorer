@@ -119,7 +119,7 @@ def getAniVAs(id):
         # otherwise, it will make another query for subsequent pages
         currPage += 1
 
-    pprint.pprint(actorToChar)
+    #pprint.pprint(actorToChar)
     return (title, actorToChar)
 
 # implement a query to retrieve a user's Completed List
@@ -192,7 +192,16 @@ def getVAsFromList(userName):
                     nameVA = f"{actor['name']['last']}, {actor['name']['first']}"
 
                     # if the VA is not in the map already, create a new dict
+                    # showToRoles = actorToShow.setdefault(nameVA, {})
                     actorToShow.setdefault(nameVA, {})
+
+                    # dupFound = False
+                    # for roles in showToRoles.values():
+                    #     if charName in roles:
+                    #         dupFound = True
+                    #         break
+                    # if dupFound:
+                    #     continue
 
                     # create a new list for chars for key 'title' if needed
                     # use a list since actors may have multiple roles in 1 show
@@ -208,14 +217,83 @@ def getVAsFromList(userName):
     print(f'largest page number is {largestPage}')
     return actorToShow
 
+# given the id of an anilist show and the username of an anilist user,
+# return a dict containing a map of VA -> showTitle -> characterRoles
+# all VAs in the dict have a role in the id show and a show in the user's list
+def getCommonVAs(id, db):
+    title, showVAs = getAniVAs(id)
+    #listVAs = getVAsFromList(user)
+
+    # commonDict = {k:v for (k,v) in listVAs.items() if k in showVAs.keys()}
+    commonVAs = {}
+    for actor in showVAs.keys():
+        if actor in db:
+            actorEntry = db[actor]
+            newEntry = {}
+
+            # remove duplicate roles for the same voice actor
+            # shows with multiple seasons only show a single one
+            # season kept is determined by the first one lexicographically
+            for k,v in sorted(actorEntry.items()):
+                if v not in newEntry.values():
+                    newEntry[k] = v
+            commonVAs[actor] = newEntry
+
+    return (title, showVAs, commonVAs)
+
+# does not remove duplicates like in getCommonVAs()
+def actorQuery(actor, db):
+    pprint.pprint(db[actor], indent=4, width=100)
+
+# change id to show title later
+# use title to search for a show and give the user a list to choose from
+def showQuery(id, user, db):
+    # should be a 3-tuple (title, showVAs, commonVAs)
+    title, showVAs, commonVAs = getCommonVAs(id, db)
+    printCommonVAs(user, title, showVAs, commonVAs)
+
+# print the results of a show query by a user
+# user wants to see what VAs are in their query and their list
+def printCommonVAs(user, title, showVAs, commonVAs):
+    print(f'{len(commonVAs)} VAs found in both {title} and {user}\'s list:\n')
+
+    for actor,roles in showVAs.items():
+
+        print(f'{actor} ({roles})')
+        print(f'{pprint.pformat(commonVAs[actor], indent=4, width=100)}\n\n')
+
+def userPrompt():
+    user = input("Username: ")
+    if not user:
+        # default
+        user = "JeremyAL"
+    print(f"User is {user}")
+    print(f"starting queries to ({url}) to populate database")
+    db = getVAsFromList(user)
+
+    while True:
+        query = input("Query (VA name 'Last, First') or (show id #####): ")
+
+        if query.isdigit():
+            showQuery(query, user, db)
+
+        elif isinstance(query, str) and ',' in query:
+            try:
+                actorQuery(query, db)
+            except KeyError as e:
+                print("no such actor")
+                # do not raise e so the loop continues
+
+        else:
+            print("invalid input")
+
 #id: 113813 # Kanokari, 8 chars
 #id: 104454, # isekai quartet, 43 chars, 40 VAs (3 VAs have 2 roles)
 #id: 20992, haikyuu2, 35 chars
+#id: 113415, jujutsu kaisen
 
-# id = 20992
-# (aniTitle, seiyuus) = getAniVAs(id)
-# print(f'\n{aniTitle} has {len(seiyuus)} voice actors\n')
 
-data = getVAsFromList("Swagocytosis")
-#pprint.pprint(data)
-print(f'\n{len(data)} voice actors involved in this list')
+userPrompt()
+
+# TODO: allow user to enter show name and get the id using that 
+# sort the final list of common VAs by: number of roles, by main/side char, etc
