@@ -35,7 +35,7 @@ query ($id: Int, $page: Int, $doList: Boolean!, $user: String) {
     Media(id: $id, type: ANIME) @skip(if: $doList) {
         ...titleCharVA
     }
-    MediaListCollection(userName: $user, type: ANIME, status: COMPLETED, forceSingleCompletedList: true) @include(if: $doList) {
+    MediaListCollection(userName: $user, type: ANIME, status_in: [COMPLETED, PLANNING, CURRENT], forceSingleCompletedList: true) @include(if: $doList) {
   	    lists {
   	        name
   	        status
@@ -155,60 +155,58 @@ def getVAsFromList(userName):
         response = json.loads(response.text)
 
         # the user's completed list of shows
-        entries = response['data']['MediaListCollection']['lists'][0]['entries']
+        #entries = response['data']['MediaListCollection']['lists'][0]['entries']
 
-        # loop through the shows and get the chars and VAs on the currPage
-        for entry in entries:
-            title = entry['media']['title']['romaji']
+        numLists = len(response['data']['MediaListCollection']['lists'])
+        for i in range(0, numLists):
+            # curr = response['data']['MediaListCollection']['lists'][i]['entries']
+            # entries.extend(curr)
+            entries = response['data']['MediaListCollection']['lists'][i]['entries']
 
-            # pageInfo is a dict with keys
-            # 'total' => total number of items
-            # 'perPage'
-            # 'currentPage'
-            # 'lastPage'
-            # 'hasNextPage'
-            pageInfo = entry['media']['characters']['pageInfo']
+            # loop through the shows and get the chars and VAs on the currPage
+            for entry in entries:
+                title =(i*'*') + entry['media']['title']['romaji']
 
-            # update this until the largest page number is found
-            # outer while loop needs to run until this page of chars is read
-            largestPage = max(largestPage, pageInfo['lastPage'])
+                # pageInfo is a dict with keys
+                # 'total' => total number of items
+                # 'perPage'
+                # 'currentPage'
+                # 'lastPage'
+                # 'hasNextPage'
+                pageInfo = entry['media']['characters']['pageInfo']
 
-            # a single edge connects a char node to a list of voice actors
-            # edge is a dict with keys 'node' and 'voiceActors'
-            edges = entry['media']['characters']['edges']
+                # update this until the largest page number is found
+                # outer while loop needs to run until this page of chars is read
+                largestPage = max(largestPage, pageInfo['lastPage'])
 
-            # skip this show since there are no chars on this page
-            # all chars have already been read for this show
-            if not edges:
-                continue
+                # a single edge connects a char node to a list of voice actors
+                # edge is a dict with keys 'node' and 'voiceActors'
+                edges = entry['media']['characters']['edges']
 
-            # loop through the list of chars
-            for edge in edges:
-                charName = edge['node']['name']['full']
-                voice_actors = edge['voiceActors']
+                # skip this show since there are no chars on this page
+                # all chars have already been read for this show
+                if not edges:
+                    continue
 
-                # loop in case a character has multiple listed VAs
-                for actor in voice_actors:
-                    nameVA = f"{actor['name']['last']}, {actor['name']['first']}"
+                # loop through the list of chars
+                for edge in edges:
+                    charName = edge['node']['name']['full']
+                    voice_actors = edge['voiceActors']
 
-                    # if the VA is not in the map already, create a new dict
-                    # showToRoles = actorToShow.setdefault(nameVA, {})
-                    actorToShow.setdefault(nameVA, {})
+                    # loop in case a character has multiple listed VAs
+                    for actor in voice_actors:
+                        nameVA = f"{actor['name']['last']}, {actor['name']['first']}"
 
-                    # dupFound = False
-                    # for roles in showToRoles.values():
-                    #     if charName in roles:
-                    #         dupFound = True
-                    #         break
-                    # if dupFound:
-                    #     continue
+                        # if the VA is not in the map already, create a new dict
+                        # showToRoles = actorToShow.setdefault(nameVA, {})
+                        actorToShow.setdefault(nameVA, {})
 
-                    # create a new list for chars for key 'title' if needed
-                    # use a list since actors may have multiple roles in 1 show
-                    actorToShow[nameVA].setdefault(title, [])
+                        # create a new list for chars for key 'title' if needed
+                        # use a list since actors may have multiple roles in 1 show
+                        actorToShow[nameVA].setdefault(title, [])
 
-                    # add the char to the list of chars for current 'title'
-                    actorToShow[nameVA][title].append(charName)
+                        # add the char to the list of chars for current 'title'
+                        actorToShow[nameVA][title].append(charName)
 
         # if incrementing this exceeds 'largestPage' then loop terminates
         # otherwise, it will make another query for subsequent pages
@@ -222,9 +220,7 @@ def getVAsFromList(userName):
 # all VAs in the dict have a role in the id show and a show in the user's list
 def getCommonVAs(id, db):
     title, showVAs = getAniVAs(id)
-    #listVAs = getVAsFromList(user)
 
-    # commonDict = {k:v for (k,v) in listVAs.items() if k in showVAs.keys()}
     commonVAs = {}
     for actor in showVAs.keys():
         if actor in db:
@@ -234,8 +230,9 @@ def getCommonVAs(id, db):
             # remove duplicate roles for the same voice actor
             # shows with multiple seasons only show a single one
             # season kept is determined by the first one lexicographically
-            for k,v in sorted(actorEntry.items()):
-                if v not in newEntry.values():
+            for k,v in sorted(actorEntry.items(), key=lambda x: x[0]):
+                # remove dupes and do not add the entry for the query title
+                if v not in newEntry.values() and k[k.rfind('*')+1:] != title:
                     newEntry[k] = v
             commonVAs[actor] = newEntry
 
