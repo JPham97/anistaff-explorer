@@ -258,9 +258,11 @@ def printCommonVAs(user, title, showVAs, commonVAs):
     print(f'{len(commonVAs)} VAs found in both {title} and {user}\'s list:\n')
 
     for actor,roles in showVAs.items():
-
+        actorEntry = commonVAs.get(actor)
+        if not actorEntry:
+            continue
         print(f'{actor} ({roles})')
-        print(f'{pprint.pformat(commonVAs[actor], indent=4, width=100)}\n\n')
+        print(f'{pprint.pformat(actorEntry, indent=4, width=100)}\n\n')
 
 def userPrompt():
     user = input("Username: ")
@@ -295,5 +297,6 @@ def userPrompt():
 
 userPrompt()
 
-# TODO: allow user to enter show name and get the id using that 
+# TODO: allow user to enter show name and get the id using that
 # sort the final list of common VAs by: number of roles, by main/side char, etc
+# add WATCHING list option instead of just COMPLETED
