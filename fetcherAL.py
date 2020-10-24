@@ -234,7 +234,8 @@ def getCommonVAs(id, db):
                 # remove dupes and do not add the entry for the query title
                 if v not in newEntry.values() and k[k.rfind('*')+1:] != title:
                     newEntry[k] = v
-            commonVAs[actor] = newEntry
+            if newEntry:
+                commonVAs[actor] = newEntry
 
     return (title, showVAs, commonVAs)
 
@@ -257,6 +258,7 @@ def printCommonVAs(user, title, showVAs, commonVAs):
     for actor,roles in showVAs.items():
         actorEntry = commonVAs.get(actor)
         if not actorEntry:
+            print(f'NONE for {actor} ({roles})\n\n')
             continue
         print(f'{actor} ({roles})')
         print(f'{pprint.pformat(actorEntry, indent=4, width=100)}\n\n')
