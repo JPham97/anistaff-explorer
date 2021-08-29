@@ -1,0 +1,89 @@
+seiyuu idea 9/12/20
+
+IN FUTURE maybe extend to anime studios, directors, composers, OP artists, etc
+
+MAL API - not public yet, requires auth and other things?
+Jikan - scrapes MAL
+anilist API
+
+avac.moe
+	pick anime1, pick anime2, outputs VAs in both
+seiyuu.moe
+	can compare a list of VAs and their respective shows
+	seems more robust and modern
+	has seasonal lists/seasonal overview
+		click on a season
+			-> output a list of VAs sorted by # of roles they have that season
+	uses Jikan API
+
+both these sites can compare VAs across 2 (2+ for seiyuu.moe) anime
+
+
+GOAL:
+implement the functionality of seiyuu.moe
+in addition, add functionality for an inputted anime list
+recommend new shows by finding new shows with favorite VAs (could be based on Planning)
+overview of voice actors based on watched shows (top VAs based on Watched)
+
+input a list through MAL API or AniList API (username)
+or input a list through text (CSV of anime titles)
+	need to search for each anime individually to map text names to actual things in db
+
+
+// functionality
+// (input = watched list/MAL or anilist username)
+// (input2 = user requested show that they want to know more about VAs)
+// (output = list of shows that share VAs with their req and shared VAs)
+read in a user anime list
+create a database of mappings // can do during search or preprocess
+mapVA = animeTitle -> listVA
+
+user inputs thisAnime name
+get all available VA in thisAnime
+newList outputAnimesMap
+for each VA in thisAnimeVAList // based on user's requested anime
+	for each currTitle in mapVA // this is based on the user's anime list
+		if currTitle -> listVA contains VA // a VA associated with user's req
+			// map the found title to the VA being searched for
+			// if currTitle already has a VA list, add this VA
+			create newMapping = currTitle -> list.add(VA)
+			outputAnimesMap.add(newMapping)
+
+
+outputAnimesMap will contain:
+	a mapping of title -> VAlist
+		title = a show that shares VAs with the user's requested show
+		VAlist = list of VAs that appear in title and the user's requested show
+could also contain VAs that ARE NOT shared
+
+
+
+
+PLAN:
+1. try to implement this algorithm using a small database that is manually generated
+2. figure out how to use API to access MAL database
+
+cases:
+-show with no VA
+-all common VA
+-no common VA
+-1 common VA
+-some common VA
+
+
+generate a random "Watched List" with same format as database
+take in an input from database
+
+VAs can be pair objects/small lists with the characters that they play
+ex: KS1,[(Sora Amamiya,Aqua),(Rie Takahashi,Megumin)]
+
+SAMPLE DATABASE:
+
+Konosuba1,[Sora Amamiya,Rie Takahashi,Ai Kayano,Jun Fukushima,Yui Horie],
+Konosuba2,[Sora Amamiya,Rie Takahashi,Ai Kayano,Jun Fukushima,Yui Horie],
+Rezero,[Rie Takahashi,Inori Minase,Rie Murakawa,Yui Horie,Yuusuke Kobayashi],
+Kanokari,[Sora Amamiya,Aoi Yuuki,Nao Touyama,Rie Takahashi],
+Chihayafuru,[Asami Seto,Mamoru Miyano,Yoshimasa Hosoya],
+SteinsGate,[Mamoru Miyano,Kana Hanazawa,Asami Imai],
+NoCommon,[RandomVA1,RandomVA2],
+NotAShow,[]
